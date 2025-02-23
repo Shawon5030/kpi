@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f0f2f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    
+    .chat-container {
+        width: 70%;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+    }
+    
+    .chat-header {
+        background-color: #007bff;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 500;
+    }
+    
+    .chat-box {
+        display: flex;
+        flex-direction: column;
+        width: 70%;
+        height: 600px;
+    }
+    
+    .messages {
+        padding: 20px;
+        overflow-y: auto;
+        flex-grow: 1;
+        background-color: #e9ecef;
+    }
+    
+    .message {
+        max-width: 75%;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        border-radius: 20px;
+        word-wrap: break-word;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .user-message {
+        background-color: #007bff;
+        color: white;
+        align-self: flex-end;
+    }
+    
+    .bot-message {
+        background-color: #f1f1f1;
+        color: #333;
+        align-self: flex-start;
+        margin-left: 30%;
+    }
+    
+    .chat-input-container {
+        display: flex;
+        border-top: 1px solid #ddd;
+    }
+    
+    .chat-input {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        font-size: 16px;
+        outline: none;
+    }
+    
+    .send-btn {
+        padding: 15px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .send-btn:hover {
+        background-color: #0056b3;
+    }
+    
+    .suggestions {
+        width: 30%;
+        padding: 20px;
+        background-color: #fff;
+        border-left: 1px solid #ddd;
+        overflow-y: auto;
+    }
+    
+    .suggestions h4 {
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #007bff;
+    }
+    
+    .suggestions ul {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    
+    .suggestions ul li {
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #555;
+        padding: 10px;
+        background-color: #f0f2f5;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .suggestions ul li:hover {
+        background-color: #e0e0e0;
+    }
+
+    @media (max-width: 768px) {
+        .chat-container {
+            width: 100%;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .chat-box {
+            width: 100%;
+            height: 70%;
+        }
+
+        .suggestions {
+            width: 100%;
+            height: 30%;
+            border-left: none;
+            border-top: 1px solid #ddd;
+        }
+    }
+</style>
+<body>
+    <div class="chat-container">
+        <div class="chat-box">
+            <div class="chat-header">
+                Chatbot
+            </div>
+            <div class="messages ">
+                <div class="message user-message">
+                    <p>আস-সালামু আলাইকুম,আমি কিভাবে সাহায্য করতে পারি?</p>
+                </div>
+                <div id="user-message" class=" bot-message message ">
+                    <p></p>
+                </div>
+            </div>
+            <form method="post" class="chat-input-container">
+                {% csrf_token %}
+                <input type="text" name="data" class="chat-input" placeholder="Type a message..." />
+                <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+        <div class="suggestions">
+            <h4>Suggestions:</h4>
+            <ul>
+                <li>Type "today first class" to get the first class of today.</li>
+                <li>Type "today total class" to get the total number of classes today.</li>
+                <li>Type "sir [teacher_name]" to get the schedule of a specific teacher today.</li>
+                <li>Type "tomorrow" to get the schedule for tomorrow.</li>
+                <li>Type "today" to get all classes scheduled for today.</li>
+                <li>Type "day [day_abbreviation]" (e.g., "day mon") to get the schedule for a specific day.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $("button").click(function (e) {
+            e.preventDefault();
+
+            var data = $("input[name='data']").val();
+           
+            var html = '<div class="message bot-message"><p>'+data+'</p></div>';
+            $(".messages").append(html);
+
+            $.ajax({
+              type: "GET",
+              url: "/form-data",
+              data: {
+                name: data
+              },
+              success: function (data) {
+                if (data.total_classes !== undefined) {
+                    var html = '<div class="message user-message"><p>Total Classes Today: ' + data.total_classes + '</p></div>';
+                    $(".messages").append(html);
+                } else if (data.classes !== undefined) {
+                    data.classes.forEach(function(classItem) {
+                        var html = '<div class="message user-message"><p>Day: ' + classItem.day + '<br>Period: ' + classItem.period + '<br>Start Time: ' + classItem.start_time + '<br>End Time: ' + classItem.end_time + '<br>Subject: ' + classItem.subject + '<br>Teacher: ' + classItem.teacher + '<br>Room: ' + (classItem.room ? classItem.room : 'N/A') + '<br>Group: ' + classItem.group + '</p></div>';
+                        $(".messages").append(html);
+                    });
+                }
+              },
+              error: function (xhr) {
+                if (xhr.status === 400) {
+                    var html = '<div class="message user-message"><p>ক্ষম করুন, আমি বুঝতে পারছি না</p></div>';
+                    $(".messages").append(html);
+                }
+              }
+            });
+        });
+    });
+</script>
+</html>
