@@ -4,6 +4,7 @@ from .models import ClassSchedule, Teacher, Room, Subject
 import datetime
 from rest_framework import generics
 from .serializers import TeacherSerializer, RoomSerializer, SubjectSerializer, ClassScheduleSerializer
+import math
 
 # Create your views here.
 def home(request):
@@ -187,3 +188,38 @@ class ClassScheduleListCreate(generics.ListCreateAPIView):
 class ClassScheduleRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = ClassSchedule.objects.all()
     serializer_class = ClassScheduleSerializer
+    
+# calculator project
+
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+import math
+
+def calculator_view(request):
+    return render(request, 'calculator/home.html')
+
+def calculate(request):
+    if request.method == 'POST':
+        try:
+            expression = request.POST.get('expression', '')
+            print(expression)
+            # Use `eval` carefully and limit the allowed functions and variables
+            allowed_names = {
+                'abs': abs,
+                'round': round,
+                'math': math,
+                'sqrt': math.sqrt,
+                'sin': math.sin,
+                'cos': math.cos,
+                'tan': math.tan,
+                'log': math.log,
+                'exp': math.exp,
+                'pow': pow,
+                'pi': math.pi,
+                'e': math.e,
+            }
+            result = eval(expression, {"__builtins__": None}, allowed_names)
+            return render(request, 'calculator/home.html', {'result': result})
+        except Exception as e:
+            return render(request, 'calculator/home.html', {'error': 'Invalid Expression'})
+    return HttpResponse(status=405)
